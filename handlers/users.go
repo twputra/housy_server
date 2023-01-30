@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-playground/validator/v10"
 
 	"github.com/gorilla/mux"
 )
@@ -57,10 +56,12 @@ func (h *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func (h *handler) CreateUser(w http.ResponseWriter, r *http.Request) {
+
+func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	request := new(usersdto.CreateUserRequest)
+	request := new(usersdto.UpdateUserRequest)
+
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
@@ -68,8 +69,38 @@ func (h *handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validation := validator.New()
-	err := validation.Struct(request)
+	id, _ := strconv.Atoi((mux.Vars(r)["id"]))
+
+	user := models.User{}
+
+	if request.Name != "" {
+		user.Name = request.Name
+	}
+
+	if request.Password != "" {
+		user.Password = request.Password
+	}
+
+	data, err := h.UserRepository.UpdateUser(user, id)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	response := dto.SuccessResult{Code: http.StatusOK, Data: convertResponse(data)}
+	json.NewEncoder(w).Encode(response)
+
+}
+
+func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+
+	user, err := h.UserRepository.GetUser(id)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
@@ -77,22 +108,14 @@ func (h *handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// data form pattern submit to pattern entity db user
-	user := models.User{
-		Name:     request.Name,
-		Username: request.Username,
-		Email:    request.Email,
-		Password: request.Password,
-		ListAsID: request.ListAsID,
-		Gender:   request.Gender,
-		Address:  request.Address,
-	}
-
-	data, err := h.UserRepository.CreateUser(user)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
-	}
+	data, err := h.UserRepository.DeleteUser(user,id)
+ 	if err != nil {
+    w.WriteHeader(http.StatusInternalServerError)
+    response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+    json.NewEncoder(w).Encode(response)
+	// Message:  "Successfully Sign Up"
+    return
+  }
 
 	w.WriteHeader(http.StatusOK)
 	response := dto.SuccessResult{Code: http.StatusOK, Data: convertResponse(data)}
@@ -104,10 +127,13 @@ func convertResponse(u models.User) usersdto.UserResponse {
 		ID:       u.ID,
 		Name:     u.Name,
 		Username: u.Username,
-		Email:    u.Email,
+		Email: u.Email,
 		Password: u.Password,
-		ListAsID: u.ListAsID,
+		Roles: u.Roles,
 		Gender:   u.Gender,
+		Phone:    u.Phone,
 		Address:  u.Address,
+		Image:    u.Image,
+	
 	}
 }

@@ -4,16 +4,33 @@ import "time"
 
 // User struct
 type User struct {
+	ID        int       `json:"id"`
+	Name      string    `json:"name" gorm:"type: varchar(255)"`
+	Username  string    `json:"username" gorm:"type: varchar(255)"`
+	Email     string    `json:"email" gorm:"type: varchar(255)"`
+	Password  string    `json:"password" gorm:"type: varchar(255)"`
+	Roles     string    `json:"roles" gorm:"type: varchar(255)"`
+	Gender    string    `json:"gender" gorm:"type: varchar(255)"`
+	Phone     string    `json:"phone" gorm:"type: varchar(255)"`
+	Address   string    `json:"address" gorm:"type: varchar(255)"`
+	Image     string    `json:"image" gorm:"type: varchar(255)"`
+	CreatedAt time.Time `json:"-"`
+	UpdatedAt time.Time `json:"-"`
+}
 
-	ID int `json:"id"`
-	Name string `json:"name" gorm:"type: varchar(255)"`
-	Username string `json:"username" gorm:"type: varchar(255)"`
-	Email string `json:"email" gorm:"type: varchar(255)"`
-	Password string `json:"password" gorm:"type: varchar(255)"`
-	ListAsID int `json:"listasid"`
-	Gender string `json:"gender" gorm:"type: varchar(255)"`
-	Address string `json:"address" gorm:"type: varchar(255)"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+type UsersProfileResponse struct {
+	ID       int    `json:"id"`
+	Fullname string `json:"fullname" `
+	Username string `json:"username" `
+	Email    string `json:"email" `
+	Password string `json:"password" `
+	Roles    string `json:"roles"`
+	Gender   string `json:"gender" `
+	Phone    string `json:"phone" `
+	Address  string `json:"address" `
+	Image    string `json:"image" `
+}
 
+func (UsersProfileResponse) TableName() string {
+	return "users"
 }
